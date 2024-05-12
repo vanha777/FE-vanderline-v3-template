@@ -1,4 +1,5 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is just a FE-template for "vanderline-v3" project which will be bootstrap with Tauri 2.0 Beta version to build a mobile apps
 
 ## Getting Started
 
