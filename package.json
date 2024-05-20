@@ -9,9 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@lit-protocol/auth-helpers": "^5.1.0",
+    "@lit-protocol/constants": "^5.1.0",
+    "@lit-protocol/contracts-sdk": "^5.1.0",
+    "@lit-protocol/lit-node-client": "^5.1.0",
+    "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.3"
+    "web3": "^4.8.0"
   },
   "devDependencies": {
     "postcss": "^8",

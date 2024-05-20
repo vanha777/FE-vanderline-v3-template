@@ -1,9 +1,151 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import { useRef, useEffect, useState } from 'react';
+import * as LitJsSdk from "@lit-protocol/lit-node-client";
+import { LitNetwork } from "@lit-protocol/constants";
+import Web3 from 'web3';
+import { checkAndSignAuthMessage } from '@lit-protocol/lit-node-client';
 
 const inter = Inter({ subsets: ["latin"] });
 
+class Lit {
+  litNodeClient;
+  chain;
+
+  constructor(chain) {
+    this.chain = chain;
+  }
+
+  async connect() {
+    this.litNodeClient = new LitJsSdk.LitNodeClient({
+      litNetwork: LitNetwork.Habanero,
+    });
+    await this.litNodeClient.connect();
+  }
+
+  async disconnect() {
+    await this.litNodeClient.disconnect();
+  }
+
+  async getAuthSig() {
+    try {
+      if (!window.ethereum) {
+        throw new Error('MetaMask is not installed. Please install MetaMask and try again.');
+      }
+      const web3 = new Web3(window.ethereum);
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const account = (await web3.eth.getAccounts())[0];
+      const nonce = await this.litNodeClient.getLatestBlockhash();
+      const authSig = await checkAndSignAuthMessage({
+        chain: this.chain,
+        nonce,
+      });
+      return authSig;
+    } catch (error) {
+      console.error('Error getting auth signature:', error);
+      throw error;
+    }
+  }
+
+  // async getAuthSig() {
+  //   const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+  //   await web3.eth.requestAccounts();
+  //   const account = (await web3.eth.getAccounts())[0];
+
+  //   const authSig = await LitJsSdk.checkAndSignAuthMessage({ web3, account, chain: this.chain });
+  //   return authSig;
+  // }
+
+  // async encrypt(message) {
+  //   // Encrypt the message
+  //   const { ciphertext, dataToEncryptHash } = await LitJsSdk.encryptString(
+  //     {
+  //       accessControlConditions,
+  //       dataToEncrypt: message,
+  //     },
+  //     this.litNodeClient,
+  //   );
+
+  //   // Return the ciphertext and dataToEncryptHash
+  //   return {
+  //     ciphertext,
+  //     dataToEncryptHash,
+  //   };
+  // }
+
+  async encrypt(message, accessControlConditions, user) {
+    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString(message);
+    // const authSig = await this.getAuthSig();
+    const encryptedSymmetricKey = await this.litNodeClient.saveEncryptionKey({
+      accessControlConditions,
+      symmetricKey,
+      user,
+      chain: this.chain,
+    });
+
+    return {
+      encryptedString,
+      encryptedSymmetricKey,
+    };
+  }
+
+}
+
+const chain = "ethereum";
+
+let myLit = new Lit("ethereum");
+myLit.litNodeClient
+await myLit.connect();
+
+
 export default function Home() {
+  const [user, setUser] = useState(null);
+  const [litInstance, setLitInstance] = useState(null);
+  const [message, setMessage] = useState("This Is Test Message From Patrick Copy Coder");
+  const [encryptedData, setEncryptedData] = useState(null);
+
+  useEffect(() => {
+    const initializeLit = async () => {
+      const lit = new Lit("ethereum");
+      await lit.connect();
+      await lit.getAuthSig();
+      setLitInstance(lit);
+    };
+
+    initializeLit();
+  }, []);
+
+  const handleEncrypt = async () => {
+    const accessControlConditions = [
+      {
+        contractAddress: "",
+        standardContractType: "",
+        chain: "ethereum",
+        method: "eth_getBalance",
+        parameters: [":userAddress", "latest"],
+        returnValueTest: {
+          comparator: ">=",
+          value: "1000000000000", // 0.000001 ETH
+        },
+      },
+    ];
+    console.log("clicking encrypt message");
+    console.log("this is user", user);
+    if (user && litInstance && message) {
+      console.log("this is user", user);
+      console.log("encrypting message");
+      const encrypted = await litInstance.encrypt(message, accessControlConditions, user);
+      console.log("this is encrypted message", encrypted);
+      setEncryptedData(encrypted);
+    }
+  };
+
+
+  const handleDisconnect = async () => {
+    if (litInstance) {
+      await litInstance.disconnect();
+    };
+  }
   return (
     <main
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
@@ -45,7 +187,7 @@ export default function Home() {
       </div>
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
+        {/* <a
           href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
           target="_blank"
@@ -111,7 +253,78 @@ export default function Home() {
           <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
             Instantly deploy your Next.js site to a shareable URL with Vercel.
           </p>
+        </a> */}
+
+        <a
+          href="http://localhost:3000/api/hello"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold`}>
+            Client-EnCryption{" "}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
+            A Simulator using Lit to encrypt your message, sign with your A.A wallet then safe into ChainSafe
+          </p>
         </a>
+
+        <a
+          href="http://localhost:3000/api/hello"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold`}>
+            Server-DeCryption{" "}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
+            A Simulator using Lit to decrypt your message, after retrieve it from ChainSafe
+          </p>
+        </a>
+
+
+        <button
+          onClick={handleEncrypt}
+          // href="http://localhost:3000/api/hello"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold`}>
+            Encryption{" "}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
+            A Simulator using Lit to decrypt your message, after retrieve it from ChainSafe
+          </p>
+        </button>
+
+        <button
+          onClick={handleDisconnect}
+          // href="http://localhost:3000/api/hello"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold`}>
+            Disconnect{" "}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
+            A Simulator using Lit to decrypt your message, after retrieve it from ChainSafe
+          </p>
+        </button>
       </div>
     </main>
   );
