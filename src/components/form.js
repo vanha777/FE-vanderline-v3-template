@@ -7,14 +7,15 @@ export default function Form({ form }) {
     // const changeSelected = (form) => {
     //     setForm(form)
     // };
-    useEffect(async () => {
-        setGreetMsg(await invoke("greet", "Copy Coder"));
-    }, []);
+    const callGreet = async (name) => {
+        const x = await invoke("greet", { name: name });
+        console.log("this is x ", x);
+    };
     console.log("form page", form);
     return (
         <>
             {form === "form" &&
-                <h1>{form}</h1>
+                <h1 onClick={() => callGreet('CopyCoder')}>{form}</h1>
             }
             {form === "Website" &&
                 <h1>{form}</h1>
@@ -41,7 +42,7 @@ export default function Form({ form }) {
             }
 
             {form === "Tiktok" &&
-                <h1>{form}</h1>
+                <h1 onClick={() => callGreet('CopyCoder')}>{form}</h1>
             }
 
             {form === "Instargram" &&
