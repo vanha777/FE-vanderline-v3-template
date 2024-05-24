@@ -1,12 +1,15 @@
 import { motion } from "framer-motion"
 import React, { useEffect, useState } from 'react';
-
+import { invoke } from "@tauri-apps/api/core";
 export default function Form({ form }) {
 
     // const [form, setForm] = useState("");
     // const changeSelected = (form) => {
     //     setForm(form)
     // };
+    useEffect(async () => {
+        setGreetMsg(await invoke("greet", "Copy Coder"));
+    }, []);
     console.log("form page", form);
     return (
         <>
