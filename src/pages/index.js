@@ -70,7 +70,7 @@ export default function NfcSettings() {
       <div className="w-full h-full flex flex-1 pt-20">
         {activeButton === 1 && <ReadSection />}
         {activeButton === 2 &&
-          <WriteSection menu={menu} setMenu={setMenu}/>
+          <WriteSection menu={menu} setMenu={setMenu} />
         }
         {activeButton === 3 && <EraseSection />}
         {activeButton === null && <Intro />}

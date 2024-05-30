@@ -1,6 +1,8 @@
 import { motion } from "framer-motion"
 import React, { useEffect, useState } from 'react';
 import { invoke } from "@tauri-apps/api/core";
+import { authenticate } from "@tauri-apps/plugin-biometric";
+import { scan } from "@tauri-apps/plugin-barcode-scanner";
 export default function Form({ form }) {
 
     // const [form, setForm] = useState("");
@@ -10,6 +12,11 @@ export default function Form({ form }) {
     const callGreet = async (name) => {
         const x = await invoke("greet", { name: name });
         console.log("this is x ", x);
+    };
+    const callCamera = async () => {
+         await authenticate('Open your wallet');
+         scan({ windowed: true, formats: [""] })
+        // console.log("this is x ", x);
     };
     console.log("form page", form);
     return (
@@ -42,7 +49,7 @@ export default function Form({ form }) {
             }
 
             {form === "Tiktok" &&
-                <h1 onClick={() => callGreet('CopyCoder')}>{form}</h1>
+                <h1 onClick={() => callCamera()}>{form}</h1>
             }
 
             {form === "Instargram" &&
