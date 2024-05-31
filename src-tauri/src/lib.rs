@@ -1,5 +1,4 @@
 use tauri::plugin;
-pub use tauri_plugin_nfc;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
